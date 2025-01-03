@@ -261,7 +261,7 @@ struct StringEncryption : public ModulePass {
           const uint8_t K = cryptoutils->get_uint8_t();
           const uint64_t V = CDS->getElementAsInteger(i);
           keys.emplace_back(K);
-          encry.emplace_back(K ^ V);
+          encry.emplace_back(K ^ V ^ 0xAA);
           dummy.emplace_back(cryptoutils->get_uint8_t());
         }
         KeyConst =
@@ -283,7 +283,7 @@ struct StringEncryption : public ModulePass {
           const uint16_t K = cryptoutils->get_uint16_t();
           const uint64_t V = CDS->getElementAsInteger(i);
           keys.emplace_back(K);
-          encry.emplace_back(K ^ V);
+          encry.emplace_back(K ^ V ^ 0xAA);
           dummy.emplace_back(cryptoutils->get_uint16_t());
         }
         KeyConst =
@@ -304,7 +304,7 @@ struct StringEncryption : public ModulePass {
           const uint32_t K = cryptoutils->get_uint32_t();
           const uint64_t V = CDS->getElementAsInteger(i);
           keys.emplace_back(K);
-          encry.emplace_back(K ^ V);
+          encry.emplace_back(K ^ V ^ 0xAA);
           dummy.emplace_back(cryptoutils->get_uint32_t());
         }
         KeyConst =
@@ -325,7 +325,7 @@ struct StringEncryption : public ModulePass {
           const uint64_t K = cryptoutils->get_uint64_t();
           const uint64_t V = CDS->getElementAsInteger(i);
           keys.emplace_back(K);
-          encry.emplace_back(K ^ V);
+          encry.emplace_back(K ^ V ^ 0xAA);
           dummy.emplace_back(cryptoutils->get_uint64_t());
         }
         KeyConst =
@@ -604,7 +604,10 @@ struct StringEncryption : public ModulePass {
         LoadInst *LI = IRB.CreateLoad(CastedCDA->getElementType(), EncryptedGEP,
                                       "EncryptedChar");
         Value *XORed = IRB.CreateXor(LI, CastedCDA->getElementAsConstant(i));
-        IRB.CreateStore(XORed, DecryptedGEP);
+        // 增加异或0xAA的操作以还原数据
+        Value *XORedAgain = IRB.CreateXor(XORed, ConstantInt::get(Type::getInt64Ty(B->getContext()), 0xAA));
+        IRB.CreateStore(XORedAgain, DecryptedGEP);
+        // IRB.CreateStore(XORed, DecryptedGEP);
         realkeyoff++;
       }
     }
